@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Playfair Display", "Cormorant Garamond", "Didot", serif;
+  --font-sans: "Montserrat", "Gotham", "Proxima Nova", Arial, sans-serif;
+}
+
+@layer base {
+  :root {
+    --bg-primary: #050507;
+    --bg-surface: #0a0a0e;
+    --bg-card: #0f0f14;
+    --accent-amber: #f59e0b;
+    --accent-orange: #ff6b00;
+    --border-subtle: rgba(255, 255, 255, 0.07);
+  }
+
+  body {
+    background-color: #050507;
+    color: #f3f4f6;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Studio Panel Styling — Refined, Human-Designed Matte Panels */
+.glass-panel {
+  background: rgba(12, 12, 16, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(16, 16, 22, 0.95);
+  border-color: rgba(255, 107, 0, 0.25);
+}
+
+/* Typography Utility Helpers */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050507;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #181820;
+  border-radius: 3px;
+  border: 1px solid #050507;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff6b00;
+}
