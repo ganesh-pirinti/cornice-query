@@ -21,9 +21,6 @@ export const FloatingCustomiseButton: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const embersRef = useRef<EmberParticle[]>([]);
 
-  const [isCompact, setIsCompact] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [isLoginIntroActive, setIsLoginIntroActive] = useState(false);
 
@@ -42,35 +39,7 @@ export const FloatingCustomiseButton: React.FC = () => {
     };
   }, []);
 
-  // Scroll Compact Morphing
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > 100 && currentScrollY > lastScrollY + 5) {
-        setIsCompact(true);
-      } else if (currentScrollY < lastScrollY - 5 || currentScrollY < 100) {
-        setIsCompact(false);
-      }
-
-      setLastScrollY(currentScrollY);
-
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setIsCompact(false);
-      }, 1200);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timeoutId);
-    };
-  }, [lastScrollY]);
-
-  // Dragon Ember Particle Canvas Engine
+  // Dragon Ember Particle Canvas Engine (Visual ambient animation)
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -147,27 +116,10 @@ export const FloatingCustomiseButton: React.FC = () => {
     };
   }, [isHovered]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const pullX = (e.clientX - centerX) * 0.15;
-    const pullY = (e.clientY - centerY) * 0.15;
-
-    setMagneticOffset({ x: pullX, y: pullY });
-  };
-
-  const handleMouseLeave = () => {
-    setMagneticOffset({ x: 0, y: 0 });
-    setIsHovered(false);
-  };
-
   const isLoginPage = location.pathname === '/login' || location.pathname === '/signup';
   const isCustomisePage = location.pathname === '/customise';
 
-  // Completely hide CUSTOMISE button while login intro is active
+  // Completely hide CUSTOMISE button ONLY while login intro animation is active on login page
   if (isLoginPage && isLoginIntroActive) {
     return null;
   }
@@ -195,20 +147,28 @@ export const FloatingCustomiseButton: React.FC = () => {
     }
 
     trackEvent('customise_clicked');
-    navigate('/customise');
+    if (!isCustomisePage) {
+      navigate('/customise');
+    } else {
+      const quizElement = document.getElementById('qualification-quiz');
+      if (quizElement) {
+        quizElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   };
 
   return (
     <div
       style={{
         position: 'fixed',
-        bottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-        right: '16px',
-        zIndex: 999,
-        transform: `translate(${magneticOffset.x}px, ${magneticOffset.y}px)`,
-        transition: magneticOffset.x === 0 ? 'transform 0.4s ease-out' : 'transform 0.1s ease-out',
+        bottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
+        right: '20px',
+        zIndex: 1000,
+        opacity: 1,
+        visibility: 'visible',
+        pointerEvents: 'auto',
       }}
-      className="sm:!bottom-[20px] sm:!right-[20px] md:!bottom-[24px] md:!right-[24px] pointer-events-auto"
+      className="pointer-events-auto"
     >
       {/* Floating Ember Particle Overlay Canvas */}
       <canvas
@@ -221,20 +181,18 @@ export const FloatingCustomiseButton: React.FC = () => {
         ref={buttonRef}
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseLeave={() => setIsHovered(false)}
         aria-label="Customise your website with Cornice & Query"
-        className={`group relative flex items-center gap-3 rounded-2xl transition-all duration-300 shadow-2xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400/80 overflow-hidden ${
-          isCustomisePage
-            ? 'scale-105 py-3.5 px-6'
-            : 'hover:-translate-y-1 active:scale-95 py-3.5 px-5 sm:px-6'
-        }`}
+        className="group relative flex items-center gap-2.5 sm:gap-3 rounded-2xl py-3 px-4 sm:py-3.5 sm:px-6 transition-all duration-300 shadow-2xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400/80 overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #FFE81A 0%, #FFC700 35%, #F59E0B 75%, #D97706 100%)',
           boxShadow: isHovered
             ? '0 0 25px rgba(255, 232, 26, 0.8), 0 0 45px rgba(245, 158, 11, 0.6), 0 -6px 16px rgba(234, 88, 12, 0.7)'
             : '0 0 16px rgba(255, 232, 26, 0.5), 0 0 30px rgba(245, 158, 11, 0.35), 0 -3px 10px rgba(234, 88, 12, 0.4)',
           border: '1px solid rgba(255, 255, 255, 0.5)',
+          transform: isHovered ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
+          opacity: 1,
+          visibility: 'visible',
         }}
       >
         {/* Animated Outer Dragon Flame Border Layer */}
@@ -249,20 +207,12 @@ export const FloatingCustomiseButton: React.FC = () => {
         </div>
 
         {/* Label Text — DRAGON FLAME YELLOW Theme with Dark Crisp Contrast */}
-        <span
-          className={`relative z-10 font-mono font-black text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap text-slate-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)] transition-all duration-300 ${
-            isCompact ? 'hidden sm:inline-block' : 'inline-block'
-          }`}
-        >
+        <span className="relative z-10 font-mono font-black text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap text-slate-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)] inline-block">
           CUSTOMISE <span className="font-serif text-slate-950">✦</span>
         </span>
 
         {/* Hover Arrow */}
-        <ArrowRight
-          className={`relative z-10 w-4 h-4 text-slate-950 transition-transform duration-300 group-hover:translate-x-1 ${
-            isCompact ? 'hidden sm:block' : 'block'
-          }`}
-        />
+        <ArrowRight className="relative z-10 w-4 h-4 text-slate-950 transition-transform duration-300 group-hover:translate-x-1 inline-block" />
       </button>
     </div>
   );

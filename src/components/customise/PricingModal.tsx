@@ -7,14 +7,15 @@ import { InteractiveCard3D } from '../3d/InteractiveCard3D';
 
 interface PricingModalProps {
   score: number;
+  fullStackChoice?: 'YES' | 'NO' | null;
 }
 
-export const PricingModal: React.FC<PricingModalProps> = ({ score }) => {
+export const PricingModal: React.FC<PricingModalProps> = ({ score, fullStackChoice }) => {
   const [showRequirementInput, setShowRequirementInput] = useState(false);
   const pricing = getPricingForScore(score);
 
   const handleContinueToDetails = () => {
-    trackEvent('pricing_viewed', { score });
+    trackEvent('pricing_viewed', { score, fullStackChoice });
     setShowRequirementInput(true);
   };
 
@@ -40,7 +41,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({ score }) => {
       <InteractiveCard3D depth={12}>
         <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-[#181824] via-[#101018] to-[#0a0a0e] border border-white/10 text-center space-y-4 shadow-2xl">
           <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest block">
-            STARTING ESTIMATE FOR FULL-STACK WEBSITE
+            {fullStackChoice === 'NO'
+              ? 'STARTING ESTIMATE FOR FRONTEND WEBSITE'
+              : 'STARTING ESTIMATE FOR FULL-STACK WEBSITE'}
           </span>
 
           <div className="flex items-center justify-center gap-3">

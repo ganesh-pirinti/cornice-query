@@ -69,10 +69,10 @@ export const QualificationQuiz: React.FC = () => {
     setFullStackChoice(choice);
     if (choice === 'YES') {
       trackEvent('fullstack_yes');
-      setShowPricing(true);
     } else {
       trackEvent('fullstack_no');
     }
+    setShowPricing(true);
   };
 
   // Compute score
@@ -80,7 +80,7 @@ export const QualificationQuiz: React.FC = () => {
     return answers[q.id] === q.correctAnswer ? acc + 1 : acc;
   }, 0);
 
-  // 1. If score < 3: Render Fail Result
+  // 1. If score < 3: Render Fail Result (Not Qualified)
   if (quizFinished && score < 3) {
     return (
       <QualificationResult
@@ -92,24 +92,7 @@ export const QualificationQuiz: React.FC = () => {
     );
   }
 
-  // 2. If score >= 3 AND FullStackChoice is NO: Render FullStack NO Result
-  if (quizFinished && score >= 3 && fullStackChoice === 'NO') {
-    return (
-      <QualificationResult
-        score={score}
-        totalQuestions={totalQuestions}
-        onTryAgain={handleTryAgain}
-        resultType="FULLSTACK_NO"
-      />
-    );
-  }
-
-  // 3. If score >= 3 AND FullStackChoice is YES AND showPricing is true: Render PricingModal
-  if (quizFinished && score >= 3 && fullStackChoice === 'YES' && showPricing) {
-    return <PricingModal score={score} />;
-  }
-
-  // 4. If score >= 3 AND FullStackChoice not chosen yet: Render FullStackQuestion
+  // 2. If score >= 3 AND FullStackChoice not chosen yet: Render FullStackQuestion
   if (quizFinished && score >= 3 && !fullStackChoice) {
     return (
       <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/10 space-y-8 animate-fadeIn" id="qualification-quiz">
@@ -119,6 +102,11 @@ export const QualificationQuiz: React.FC = () => {
         />
       </div>
     );
+  }
+
+  // 3. If score >= 3 AND FullStackChoice chosen: Render Qualified Result (PricingModal with WhatsApp Channel CTA)
+  if (quizFinished && score >= 3 && fullStackChoice && showPricing) {
+    return <PricingModal score={score} fullStackChoice={fullStackChoice} />;
   }
 
   // 5. Active Quiz Question View
@@ -151,14 +139,22 @@ export const QualificationQuiz: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={!selectedOptionId}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+          style={
+            !selectedOptionId
+              ? {
+                  backgroundColor: 'rgba(35, 30, 25, 0.9)',
+                  border: '1px solid rgba(220, 150, 50, 0.55)',
+                }
+              : undefined
+          }
+          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 opacity-100 z-10 relative ${
             selectedOptionId
-              ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 shadow-lg shadow-orange-500/20 hover:scale-105 active:scale-95'
-              : 'bg-white/5 text-zinc-500 border border-white/5 cursor-not-allowed opacity-60'
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 shadow-lg shadow-orange-500/25 hover:scale-105 active:scale-95 cursor-pointer'
+              : 'text-[#f5f0eb] cursor-not-allowed'
           }`}
         >
           <span>{currentIndex === totalQuestions - 1 ? 'CONTINUE TO QUALIFICATION' : 'NEXT QUESTION'}</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className={`w-4 h-4 shrink-0 ${selectedOptionId ? 'text-slate-950' : 'text-amber-400'}`} />
         </button>
       </div>
     </div>

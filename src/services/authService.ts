@@ -46,19 +46,38 @@ export function getAllUsers(): UserProfile[] {
 }
 
 /**
+ * Safely resolves the OAuth redirect URL for local development, Vercel production/preview, and Netlify.
+ */
+export function getAuthRedirectUrl(): string {
+  if (typeof window === 'undefined') {
+    return 'https://cornice-query.vercel.app';
+  }
+
+  const origin = window.location.origin;
+
+  if (origin && origin.startsWith('http')) {
+    return origin;
+  }
+
+  return 'https://cornice-query.vercel.app';
+}
+
+/**
  * Perform Google OAuth Authentication via Supabase
  */
 export async function signInWithGoogle(): Promise<{ error: Error | null }> {
   if (isSupabaseConfigured) {
     const pendingRef = getPendingReferralCode();
+    const redirectUrl = getAuthRedirectUrl();
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: redirectUrl,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-          pending_referral: pendingRef || '',
+          ...(pendingRef ? { pending_referral: pendingRef } : {}),
         },
       },
     });
