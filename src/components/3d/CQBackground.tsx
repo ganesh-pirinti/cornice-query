@@ -21,12 +21,18 @@ export const CQBackground: React.FC = () => {
 
   // WebGL & Device Capability Checks
   useEffect(() => {
-    // 1. WebGL Support
+    // 1. WebGL Support Check
     try {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) setHasWebGL(false);
-    } catch {
+      if (!gl) {
+        console.warn('[CQ 3D Diagnostics] WebGL context unavailable. Falling back to CSS background.');
+        setHasWebGL(false);
+      } else {
+        console.log('[CQ 3D Diagnostics] WebGL 3D Background Canvas active.');
+      }
+    } catch (err) {
+      console.warn('[CQ 3D Diagnostics] WebGL initialization error:', err);
       setHasWebGL(false);
     }
 

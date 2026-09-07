@@ -34,36 +34,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     if (!isSupabaseConfigured) return getCurrentUser();
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error || !data) return getCurrentUser();
+      if (error || !data) {
+        // Fallback: If profile record is not yet in profiles table, retrieve auth user metadata
+        const { data: authUserData } = await supabase.auth.getUser();
+        const authUser = authUserData?.user;
+        if (authUser && authUser.id === userId) {
+          const userEmail = authUser.email || '';
+          const displayName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || userEmail.split('@')[0] || 'CQ User';
+          const avatarUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
+
+          const newProfile = {
+            id: userId,
+            email: userEmail,
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            provider: 'google',
+            referral_code: 'CQ-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+            boost_points: 10,
+            first_20_bonus: true,
+          };
+
+          await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' });
+          const { data: createdProfile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+          data = createdProfile || newProfile;
+        }
+      }
+
+      if (!data) return getCurrentUser();
 
       const mapped: UserProfile = {
         id: data.id,
         auth_user_id: data.id,
-        display_name: data.display_name || data.full_name || data.email.split('@')[0],
-        email: data.email,
+        display_name: data.display_name || data.full_name || data.email?.split('@')[0] || 'CQ User',
+        email: data.email || '',
         avatar_url: data.avatar_url,
         provider: data.provider || 'google',
-        referral_code: data.referral_code,
+        referral_code: data.referral_code || ('CQ-' + Math.random().toString(36).substring(2, 8).toUpperCase()),
         referred_by: data.referred_by,
         points: data.boost_points ?? 10,
         is_early_user: data.first_20_bonus ?? false,
         successful_referrals: 0,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString(),
       };
 
-      const { count } = await supabase
-        .from('referrals')
-        .select('*', { count: 'exact', head: true })
-        .eq('referrer_id', data.id);
-
-      mapped.successful_referrals = count || 0;
+      try {
+        const { count } = await supabase
+          .from('referrals')
+          .select('*', { count: 'exact', head: true })
+          .eq('referrer_id', data.id);
+        mapped.successful_referrals = count || 0;
+      } catch {
+        // Ignore referrals query error
+      }
 
       localStorage.setItem('cq_current_user_profile_v1', JSON.stringify(mapped));
       setUser(mapped);

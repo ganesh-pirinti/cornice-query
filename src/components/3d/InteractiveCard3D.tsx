@@ -12,7 +12,7 @@ export const InteractiveCard3D: React.FC<InteractiveCard3DProps> = ({
   depth = 6,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [transformStyle, setTransformStyle] = useState('perspective(1200px) rotateX(0deg) rotateY(0deg) translateZ(0px)');
+  const [transformStyle, setTransformStyle] = useState('perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)');
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -28,7 +28,7 @@ export const InteractiveCard3D: React.FC<InteractiveCard3DProps> = ({
     const rotateY = ((x - centerX) / centerX) * depth;
 
     setTransformStyle(
-      `perspective(1200px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(6px)`
+      `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(1.01)`
     );
   };
 
@@ -38,7 +38,7 @@ export const InteractiveCard3D: React.FC<InteractiveCard3DProps> = ({
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    setTransformStyle('perspective(1200px) rotateX(0deg) rotateY(0deg) translateZ(0px)');
+    setTransformStyle('perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)');
   };
 
   return (
@@ -50,11 +50,10 @@ export const InteractiveCard3D: React.FC<InteractiveCard3DProps> = ({
       style={{
         transform: transformStyle,
         transition: isHovered ? 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1)' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-        transformStyle: 'preserve-3d',
       }}
-      className={`relative will-change-transform ${className}`}
+      className={`relative ${isHovered ? 'will-change-transform' : ''} ${className}`}
     >
-      <div style={{ transform: 'translateZ(4px)' }}>{children}</div>
+      {children}
     </div>
   );
 };

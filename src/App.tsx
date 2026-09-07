@@ -61,7 +61,7 @@ export function App() {
         <Navbar onOpenSearch={() => setIsSearchOpen(true)} />
 
         {/* Main Page Body */}
-        <main className="flex-1">
+        <main className="flex-1 relative z-10">
           <Routes>
             <Route
               path="/"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Film, Play } from 'lucide-react';
 
 interface MediaFallbackProps {
@@ -17,6 +17,27 @@ export const MediaFallback: React.FC<MediaFallbackProps> = ({
 }) => {
   const [hasError, setHasError] = useState(!src);
   const [isLoading, setIsLoading] = useState(!!src);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!src) return;
+
+    // 1. If image is already complete in DOM, clear loading immediately
+    if (imgRef.current && imgRef.current.complete) {
+      setIsLoading(false);
+      if (imgRef.current.naturalWidth === 0) {
+        setHasError(true);
+      }
+      return;
+    }
+
+    // 2. Safety timeout: guarantee image or fallback is revealed within 1.2s max
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [src]);
 
   if (hasError || !src) {
     return (
@@ -41,10 +62,12 @@ export const MediaFallback: React.FC<MediaFallbackProps> = ({
         </div>
       )}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         onLoad={() => setIsLoading(false)}
         onError={() => {
+          console.warn(`[CQ Media Diagnostics] Image load failure for "${alt}". Triggering fallback layout. Src:`, src);
           setHasError(true);
           setIsLoading(false);
         }}

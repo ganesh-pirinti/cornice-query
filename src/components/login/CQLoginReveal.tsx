@@ -16,10 +16,12 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
 
   // Signal intro active state on mount, complete/unmount
   useEffect(() => {
+    console.log('[CQ Login Diagnostics] Login reveal container mounted.');
     // Notify app that login intro is active
     window.dispatchEvent(new CustomEvent('cq_login_intro', { detail: { active: true } }));
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      console.log('[CQ Login Diagnostics] Reduced motion detected. Fast-forwarding intro.');
       setIsReducedMotion(true);
       setIntroState('complete');
       setElapsedTime(13);
@@ -37,6 +39,7 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
       setElapsedTime(currentSeconds);
 
       if (currentSeconds >= 5.0 && introState === 'active') {
+        console.log('[CQ Login Diagnostics] Login cinematic animation sequence completed naturally.');
         setIntroState('complete');
         window.dispatchEvent(new CustomEvent('cq_login_intro', { detail: { active: false } }));
       }
@@ -46,9 +49,20 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
 
     animationFrameId = requestAnimationFrame(tick);
 
+    // Safety fallback: guarantee content is revealed within 1.5s max if RAF is throttled
+    const safetyTimer = setTimeout(() => {
+      if (!isSkippedRef.current && introState === 'active') {
+        console.warn('[CQ Login Diagnostics] Safety fallback triggered: Force-revealing login interface.');
+        setElapsedTime(5.0);
+        setIntroState('complete');
+        window.dispatchEvent(new CustomEvent('cq_login_intro', { detail: { active: false } }));
+      }
+    }, 1500);
+
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      clearTimeout(safetyTimer);
       // Ensure CUSTOMISE button is restored when leaving login page
       window.dispatchEvent(new CustomEvent('cq_login_intro', { detail: { active: false } }));
     };
