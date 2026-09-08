@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LoginForm } from '../components/auth/LoginForm';
 import { CQLoginReveal } from '../components/login/CQLoginReveal';
 import { useSetDocumentTitle } from '../utils/seo';
+import { useAuth } from '../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const isSignUp = location.pathname.includes('signup');
 
   useSetDocumentTitle({
@@ -14,8 +16,18 @@ export const LoginPage: React.FC = () => {
     description: 'Sign in or create an account to access custom builds, boost points, and referral dashboard.',
   });
 
+  useEffect(() => {
+    if (user && !loading) {
+      const targetPath = (location.state as any)?.from?.pathname || '/dashboard';
+      console.log('[CQ AUTH DEBUG] Authenticated user on /login, navigating to:', targetPath);
+      navigate(targetPath, { replace: true });
+    }
+  }, [user, loading, location, navigate]);
+
   const handleAuthSuccess = () => {
-    navigate('/');
+    const targetPath = (location.state as any)?.from?.pathname || '/dashboard';
+    console.log('[CQ AUTH DEBUG] Auth success handler navigating to:', targetPath);
+    navigate(targetPath, { replace: true });
   };
 
   return (

@@ -1,4 +1,5 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { isFirebaseConfigured, db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { getCurrentUser } from './authService';
 
 export interface UserCustomisationRequest {
@@ -21,41 +22,36 @@ export async function saveUserCustomisationRequest(
 ): Promise<UserCustomisationRequest> {
   const user = getCurrentUser();
 
-  if (isSupabaseConfigured && user?.id) {
+  if (isFirebaseConfigured && user?.id) {
     try {
-      const { data, error } = await supabase
-        .from('customisation_submissions')
-        .insert({
-          user_id: user.id,
-          qualification_score: request.quizScore,
-          full_stack_interest: request.fullStack,
-          boost_points: request.pointsUsed || user.points || 0,
-          discount_eligible: user.points >= 100,
-          requirements: request.requirement,
-          price_shown: request.priceShown,
-          status: 'Requirement Submitted',
-        })
-        .select()
-        .single();
+      const docRef = await addDoc(collection(db, 'customisation_submissions'), {
+        userId: user.id,
+        quizScore: request.quizScore,
+        fullStack: request.fullStack,
+        pointsUsed: request.pointsUsed || user.points || 0,
+        discountEligible: user.points >= 100,
+        requirement: request.requirement,
+        priceShown: request.priceShown,
+        status: 'Requirement Submitted',
+        createdAt: serverTimestamp(),
+      });
 
-      if (!error && data) {
-        const record: UserCustomisationRequest = {
-          id: data.id,
-          userId: data.user_id,
-          quizScore: data.qualification_score,
-          fullStack: data.full_stack_interest,
-          requirement: data.requirements || '',
-          priceShown: data.price_shown || '',
-          discountPercentage: request.discountPercentage,
-          pointsUsed: data.boost_points,
-          status: data.status as any,
-          createdAt: data.created_at,
-        };
-        saveToLocalStorage(record);
-        return record;
-      }
-    } catch {
-      // Fallback to local storage
+      const record: UserCustomisationRequest = {
+        id: docRef.id,
+        userId: user.id,
+        quizScore: request.quizScore,
+        fullStack: request.fullStack,
+        requirement: request.requirement,
+        priceShown: request.priceShown,
+        discountPercentage: request.discountPercentage,
+        pointsUsed: request.pointsUsed,
+        status: 'Requirement Submitted',
+        createdAt: new Date().toISOString(),
+      };
+      saveToLocalStorage(record);
+      return record;
+    } catch (err) {
+      console.warn('[CQ Customisation Firebase Warning]:', err);
     }
   }
 
@@ -86,30 +82,34 @@ export function getUserCustomisations(userId?: string): UserCustomisationRequest
   return existing;
 }
 
-export async function fetchUserCustomisationsFromSupabase(userId: string): Promise<UserCustomisationRequest[]> {
-  if (!isSupabaseConfigured) return getUserCustomisations(userId);
+export async function fetchUserCustomisationsFromFirestore(userId: string): Promise<UserCustomisationRequest[]> {
+  if (!isFirebaseConfigured) return getUserCustomisations(userId);
 
   try {
-    const { data, error } = await supabase
-      .from('customisation_submissions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    const q = query(
+      collection(db, 'customisation_submissions'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
 
-    if (error || !data) return getUserCustomisations(userId);
+    if (snap.empty) return getUserCustomisations(userId);
 
-    return data.map((item) => ({
-      id: item.id,
-      userId: item.user_id,
-      quizScore: item.qualification_score,
-      fullStack: item.full_stack_interest,
-      requirement: item.requirements || '',
-      priceShown: item.price_shown || '',
-      discountPercentage: item.discount_eligible ? 40 : 0,
-      pointsUsed: item.boost_points,
-      status: item.status as any,
-      createdAt: item.created_at,
-    }));
+    return snap.docs.map((docItem) => {
+      const data = docItem.data();
+      return {
+        id: docItem.id,
+        userId: data.userId,
+        quizScore: data.quizScore,
+        fullStack: data.fullStack,
+        requirement: data.requirement || '',
+        priceShown: data.priceShown || '',
+        discountPercentage: data.discountEligible ? 40 : 0,
+        pointsUsed: data.pointsUsed,
+        status: data.status,
+        createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toISOString() : new Date().toISOString(),
+      };
+    });
   } catch {
     return getUserCustomisations(userId);
   }

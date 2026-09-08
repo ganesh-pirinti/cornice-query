@@ -1,6 +1,6 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { generateUniqueReferralCode, getPendingReferralCode, clearPendingReferralCode } from './referralService';
 import { FIRST_USER_LIMIT, EARLY_USER_POINTS, NORMAL_USER_POINTS, POINTS_PER_REFERRAL, REFERRAL_TARGET } from '../config/boostPoints';
+import { signInWithGoogleFirebase, signOutFirebase } from './firebaseAuthService';
 
 export interface UserProfile {
   id: string;
@@ -46,160 +46,35 @@ export function getAllUsers(): UserProfile[] {
 }
 
 /**
- * Safely resolves the OAuth redirect URL for local development, Vercel production/preview, and Netlify.
+ * Perform Google OAuth Authentication via Firebase
  */
-export function getAuthRedirectUrl(): string {
-  if (typeof window === 'undefined') {
-    return 'https://cornice-query.vercel.app';
+export async function signInWithGoogle(): Promise<{ user: UserProfile | null; error: Error | null }> {
+  const res = await signInWithGoogleFirebase();
+  if (res.user) {
+    cachedProfile = res.user;
   }
-
-  const origin = window.location.origin;
-
-  if (origin && origin.startsWith('http')) {
-    return origin;
-  }
-
-  return 'https://cornice-query.vercel.app';
+  return { user: res.user, error: res.error };
 }
 
 /**
- * Perform Google OAuth Authentication via Supabase
- */
-export async function signInWithGoogle(): Promise<{ error: Error | null }> {
-  if (isSupabaseConfigured) {
-    const pendingRef = getPendingReferralCode();
-    const redirectUrl = getAuthRedirectUrl();
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-          ...(pendingRef ? { pending_referral: pendingRef } : {}),
-        },
-      },
-    });
-    return { error };
-  } else {
-    // Development fallback mode if Supabase env vars are not set
-    const mockEmail = `google.user.${Math.floor(Math.random() * 1000)}@cq-builds.dev`;
-    const user = signUp(mockEmail, 'Google Developer', 'password123');
-    user.provider = 'google';
-    user.avatar_url = 'https://lh3.googleusercontent.com/a/default-user';
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-    cachedProfile = user;
-    return { error: null };
-  }
-}
-
-/**
- * Perform Email/Password Sign Up with Supabase backend
+ * Perform Email/Password Sign Up (Local / Firebase Fallback)
  */
 export async function signUpWithEmail(
   email: string,
   displayName: string,
-  password?: string
+  _password?: string
 ): Promise<{ user: UserProfile | null; error: Error | null }> {
-  const pendingRef = getPendingReferralCode();
-
-  if (isSupabaseConfigured) {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password: password || 'CQ_SecurePass_2026!',
-      options: {
-        data: {
-          display_name: displayName,
-          full_name: displayName,
-          pending_referral: pendingRef || '',
-        },
-      },
-    });
-
-    if (authError) return { user: null, error: authError };
-
-    if (authData.user) {
-      // Process pending referral via server-side RPC if present
-      if (pendingRef) {
-        try {
-          await supabase.rpc('process_referral_on_signup', {
-            p_new_user_id: authData.user.id,
-            p_referral_code: pendingRef,
-          });
-        } catch {
-          // Ignore RPC failure gracefully
-        }
-        clearPendingReferralCode();
-      }
-
-      // Fetch newly created profile from Supabase
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profile) {
-        const userProfile = mapDatabaseProfileToUser(profile);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userProfile));
-        cachedProfile = userProfile;
-        notifyUserUpdated(userProfile);
-        return { user: userProfile, error: null };
-      }
-    }
-  }
-
-  const user = signUp(email, displayName, password);
+  const user = signUp(email, displayName, _password);
   return { user, error: null };
 }
 
 /**
- * Perform Email Sign In with Supabase backend
+ * Perform Email Sign In (Local / Firebase Fallback)
  */
 export async function signInWithEmail(
   email: string,
-  password?: string
+  _password?: string
 ): Promise<{ user: UserProfile | null; error: Error | null }> {
-  if (isSupabaseConfigured) {
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password: password || 'CQ_SecurePass_2026!',
-    });
-
-    if (authError) return { user: null, error: authError };
-
-    if (authData.user) {
-      // Check if pending referral needs to be processed
-      const pendingRef = getPendingReferralCode();
-      if (pendingRef) {
-        try {
-          await supabase.rpc('process_referral_on_signup', {
-            p_new_user_id: authData.user.id,
-            p_referral_code: pendingRef,
-          });
-        } catch {
-          // Ignore RPC failure gracefully
-        }
-        clearPendingReferralCode();
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profile) {
-        const userProfile = mapDatabaseProfileToUser(profile);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userProfile));
-        cachedProfile = userProfile;
-        notifyUserUpdated(userProfile);
-        return { user: userProfile, error: null };
-      }
-    }
-  }
-
   const user = signIn(email);
   return { user, error: null };
 }
@@ -208,87 +83,12 @@ export async function signInWithEmail(
  * Sign out and clear persistent session
  */
 export async function signOutUser(): Promise<void> {
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Ignore network errors on signout
-    }
-  }
+  await signOutFirebase();
   localStorage.removeItem(AUTH_USER_KEY);
   cachedProfile = null;
 }
 
 export const signOut = signOutUser;
-
-/**
- * Subscribe to Supabase auth state changes & restore persistent session
- */
-export function initAuthSessionListener(onUserChange: (user: UserProfile | null) => void): () => void {
-  if (isSupabaseConfigured) {
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        // Process pending referral if present
-        const pendingRef = getPendingReferralCode();
-        if (pendingRef) {
-          try {
-            await supabase.rpc('process_referral_on_signup', {
-              p_new_user_id: session.user.id,
-              p_referral_code: pendingRef,
-            });
-          } catch {
-            // Ignore
-          }
-          clearPendingReferralCode();
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile) {
-          const userProfile = mapDatabaseProfileToUser(profile);
-          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userProfile));
-          cachedProfile = userProfile;
-          onUserChange(userProfile);
-          return;
-        }
-      }
-
-      if (event === 'SIGNED_OUT') {
-        localStorage.removeItem(AUTH_USER_KEY);
-        cachedProfile = null;
-        onUserChange(null);
-      }
-    });
-
-    return () => {
-      subscription.subscription.unsubscribe();
-    };
-  }
-
-  return () => {};
-}
-
-export function mapDatabaseProfileToUser(row: any): UserProfile {
-  return {
-    id: row.id,
-    auth_user_id: row.id,
-    display_name: row.display_name || row.full_name || row.email.split('@')[0],
-    email: row.email,
-    avatar_url: row.avatar_url,
-    provider: row.provider || 'email',
-    referral_code: row.referral_code,
-    referred_by: row.referred_by,
-    points: row.boost_points ?? 10,
-    is_early_user: row.first_20_bonus ?? false,
-    successful_referrals: 0,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
-}
 
 export function signUp(email: string, displayName: string, _password?: string): UserProfile {
   const allUsers = getAllUsers();

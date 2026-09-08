@@ -1,22 +1,25 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { onAuthStateChanged } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { auth, isFirebaseConfigured } from '../lib/firebase';
+import {
+  signInWithGoogleFirebase,
+  fetchFirebaseUserProfile,
+  signOutFirebase,
+} from '../services/firebaseAuthService';
 import {
   getCurrentUser,
-  signInWithGoogle as serviceSignInWithGoogle,
   signInWithEmail as serviceSignInWithEmail,
   signUpWithEmail as serviceSignUpWithEmail,
-  signOutUser as serviceSignOutUser,
   type UserProfile,
 } from '../services/authService';
 
 interface AuthContextType {
   user: UserProfile | null;
-  session: Session | null;
-  authUser: User | null;
+  authUser: FirebaseUser | null;
   loading: boolean;
   isConfigured: boolean;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ user: UserProfile | null; isNewUser?: boolean; error: Error | null }>;
   signInWithEmail: (email: string, password?: string) => Promise<{ user: UserProfile | null; error: Error | null }>;
   signUpWithEmail: (email: string, displayName: string, password?: string) => Promise<{ user: UserProfile | null; error: Error | null }>;
   signOut: () => Promise<void>;
@@ -26,146 +29,105 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(getCurrentUser());
-  const [session, setSession] = useState<Session | null>(null);
-  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
-    if (!isSupabaseConfigured) return getCurrentUser();
-    try {
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error || !data) {
-        // Fallback: If profile record is not yet in profiles table, retrieve auth user metadata
-        const { data: authUserData } = await supabase.auth.getUser();
-        const authUser = authUserData?.user;
-        if (authUser && authUser.id === userId) {
-          const userEmail = authUser.email || '';
-          const displayName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || userEmail.split('@')[0] || 'CQ User';
-          const avatarUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
-
-          const newProfile = {
-            id: userId,
-            email: userEmail,
-            display_name: displayName,
-            avatar_url: avatarUrl,
-            provider: 'google',
-            referral_code: 'CQ-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-            boost_points: 10,
-            first_20_bonus: true,
-          };
-
-          await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' });
-          const { data: createdProfile } = await supabase.from('profiles').select('*').eq('id', userId).single();
-          data = createdProfile || newProfile;
-        }
-      }
-
-      if (!data) return getCurrentUser();
-
-      const mapped: UserProfile = {
-        id: data.id,
-        auth_user_id: data.id,
-        display_name: data.display_name || data.full_name || data.email?.split('@')[0] || 'CQ User',
-        email: data.email || '',
-        avatar_url: data.avatar_url,
-        provider: data.provider || 'google',
-        referral_code: data.referral_code || ('CQ-' + Math.random().toString(36).substring(2, 8).toUpperCase()),
-        referred_by: data.referred_by,
-        points: data.boost_points ?? 10,
-        is_early_user: data.first_20_bonus ?? false,
-        successful_referrals: 0,
-        created_at: data.created_at || new Date().toISOString(),
-        updated_at: data.updated_at || new Date().toISOString(),
-      };
-
-      try {
-        const { count } = await supabase
-          .from('referrals')
-          .select('*', { count: 'exact', head: true })
-          .eq('referrer_id', data.id);
-        mapped.successful_referrals = count || 0;
-      } catch {
-        // Ignore referrals query error
-      }
-
-      localStorage.setItem('cq_current_user_profile_v1', JSON.stringify(mapped));
-      setUser(mapped);
-      window.dispatchEvent(new CustomEvent('cq_user_updated', { detail: mapped }));
-      return mapped;
-    } catch {
-      return getCurrentUser();
-    }
-  }, []);
-
   const refreshProfile = useCallback(async (): Promise<UserProfile | null> => {
-    if (authUser?.id) {
-      return await fetchProfile(authUser.id);
+    if (authUser?.uid && isFirebaseConfigured) {
+      const updated = await fetchFirebaseUserProfile(authUser.uid, authUser);
+      if (updated) {
+        setUser(updated);
+        return updated;
+      }
     }
     const current = getCurrentUser();
     setUser(current);
     return current;
-  }, [authUser, fetchProfile]);
+  }, [authUser]);
 
   useEffect(() => {
     let mounted = true;
 
-    async function initAuth() {
-      if (isSupabaseConfigured) {
-        try {
-          const { data } = await supabase.auth.getSession();
-          if (mounted) {
-            setSession(data.session);
-            setAuthUser(data.session?.user ?? null);
-            if (data.session?.user) {
-              await fetchProfile(data.session.user.id);
-            }
-          }
-        } catch {
-          // Keep current fallback profile
-        } finally {
-          if (mounted) setLoading(false);
-        }
-      } else {
-        if (mounted) setLoading(false);
+    const handleUserUpdate = (e: CustomEvent) => {
+      if (mounted) {
+        const detailUser = e.detail !== undefined ? e.detail : getCurrentUser();
+        console.log('[CQ AUTH DEBUG] AuthContext received cq_user_updated event:', detailUser?.email || detailUser?.id);
+        setUser(detailUser);
+        setLoading(false);
       }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cq_user_updated', handleUserUpdate as EventListener);
     }
 
-    initAuth();
-
-    if (isSupabaseConfigured) {
-      const { data: listener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+    if (isFirebaseConfigured) {
+      const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         if (!mounted) return;
-        setSession(currentSession);
-        setAuthUser(currentSession?.user ?? null);
+        setAuthUser(fbUser);
 
-        if (currentSession?.user) {
-          await fetchProfile(currentSession.user.id);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          localStorage.removeItem('cq_current_user_profile_v1');
-          window.dispatchEvent(new CustomEvent('cq_user_updated', { detail: null }));
+        if (fbUser) {
+          const profile = await fetchFirebaseUserProfile(fbUser.uid, fbUser);
+          if (mounted) {
+            const realUser = profile || {
+              id: fbUser.uid,
+              auth_user_id: fbUser.uid,
+              display_name: fbUser.displayName || fbUser.email?.split('@')[0] || 'CQ User',
+              email: fbUser.email || '',
+              avatar_url: fbUser.photoURL || undefined,
+              provider: 'google',
+              referral_code: 'CQ' + fbUser.uid.substring(0, 6).toUpperCase(),
+              points: 10,
+              is_early_user: false,
+              successful_referrals: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            console.log('[CQ AUTH DEBUG] AuthContext user updated via onAuthStateChanged:', realUser.email);
+            setUser(realUser);
+            setLoading(false);
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
         }
       });
 
       return () => {
         mounted = false;
-        listener.subscription.unsubscribe();
+        unsubscribe();
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('cq_user_updated', handleUserUpdate as EventListener);
+        }
+      };
+    } else {
+      if (mounted) {
+        setUser(getCurrentUser());
+        setLoading(false);
+      }
+      return () => {
+        mounted = false;
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('cq_user_updated', handleUserUpdate as EventListener);
+        }
       };
     }
-
-    return () => {
-      mounted = false;
-    };
-  }, [fetchProfile]);
+  }, []);
 
   const signInWithGoogle = async () => {
-    return await serviceSignInWithGoogle();
+    setLoading(true);
+    try {
+      const res = await signInWithGoogleFirebase();
+      if (res.user) {
+        setUser(res.user);
+      }
+      return res;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signInWithEmail = async (email: string, password?: string) => {
@@ -185,21 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await serviceSignOutUser();
+    await signOutFirebase();
     setUser(null);
-    setSession(null);
     setAuthUser(null);
-    window.dispatchEvent(new CustomEvent('cq_user_updated', { detail: null }));
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         authUser,
         loading,
-        isConfigured: isSupabaseConfigured,
+        isConfigured: isFirebaseConfigured,
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,

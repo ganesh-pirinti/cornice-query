@@ -12,11 +12,12 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
   const [introState, setIntroState] = useState<'active' | 'skipped' | 'complete'>('active');
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSkippedRef = useRef<boolean>(false);
-  const startTimeRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(typeof performance !== 'undefined' ? performance.now() : Date.now());
 
   // Signal intro active state on mount, complete/unmount
   useEffect(() => {
     console.log('[CQ Login Diagnostics] Login reveal container mounted.');
+    startTimeRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
     // Notify app that login intro is active
     window.dispatchEvent(new CustomEvent('cq_login_intro', { detail: { active: true } }));
 
@@ -34,8 +35,14 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
     const tick = (now: number) => {
       if (isSkippedRef.current) return;
 
-      if (!startTimeRef.current) startTimeRef.current = now;
-      const currentSeconds = (now - startTimeRef.current) / 1000;
+      const timestamp = typeof now === 'number' && !isNaN(now) && now > 0
+        ? now
+        : (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+      if (!startTimeRef.current) {
+        startTimeRef.current = timestamp;
+      }
+      const currentSeconds = Math.max(0, (timestamp - startTimeRef.current) / 1000);
       setElapsedTime(currentSeconds);
 
       if (currentSeconds >= 5.0 && introState === 'active') {

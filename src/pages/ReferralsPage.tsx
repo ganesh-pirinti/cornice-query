@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { getCurrentUser } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import { ReferralCard } from '../components/dashboard/ReferralCard';
 import { useSetDocumentTitle } from '../utils/seo';
 import { Users, ArrowLeft } from 'lucide-react';
 
 export const ReferralsPage: React.FC = () => {
-  const user = getCurrentUser();
+  const { user } = useAuth();
 
   useSetDocumentTitle({
     title: 'Cornice & Query — Referral Hub',

@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { getCurrentUser } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import { getUserCustomisations } from '../services/customisationService';
 import { CustomisationsTable } from '../components/dashboard/CustomisationsTable';
 import { useSetDocumentTitle } from '../utils/seo';
 import { Layers, ArrowLeft } from 'lucide-react';
 
 export const UserCustomisationsPage: React.FC = () => {
-  const user = getCurrentUser();
+  const { user } = useAuth();
 
   useSetDocumentTitle({
     title: 'Cornice & Query — My Customisations',

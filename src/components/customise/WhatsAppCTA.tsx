@@ -22,7 +22,7 @@ export const WhatsAppCTA: React.FC<WhatsAppCTAProps> = ({ score, offerPrice = "â
 
     const currentUser = getCurrentUser();
 
-    // Persist customisation requirement submission into Supabase / Backend storage
+    // Persist customisation requirement submission into Firestore / Backend storage
     try {
       await saveUserCustomisationRequest({
         userId: currentUser?.id || 'anon_user',

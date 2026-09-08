@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // -------------------------------------------------------------------------
+    // USERS COLLECTION: users/{userId}
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      // 1. Read: Users can read their own profile OR list/query for referralCode verification
+      allow get: if isOwner(userId);
+      allow list: if isSignedIn();
+
+      // 2. Create: Authenticated user can create their own initial profile document
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email is string
+        && request.resource.data.referralCode is string
+        && request.resource.data.boostPoints in [10, 100];
+
+      // 3. Update:
+      // Case A: Owner updating profile/lastLoginAt without tampering points/referral status
+      // Case B: A newly registered user updating a referrer's document to credit genuine referral (+10 pts, +1 referralCount)
+      allow update: if (isOwner(userId)
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['boostPoints', 'isEarlyUser', 'referralCount'])
+                || request.resource.data.boostPoints == resource.data.boostPoints))
+        || (isSignedIn() 
+            && request.resource.data.boostPoints == resource.data.boostPoints + 10
+            && request.resource.data.referralCount == resource.data.referralCount + 1
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['boostPoints', 'referralCount']));
+    }
+
+    // -------------------------------------------------------------------------
+    // CUSTOMISATION SUBMISSIONS COLLECTION: customisation_submissions/{submissionId}
+    // -------------------------------------------------------------------------
+    match /customisation_submissions/{submissionId} {
+      // Authenticated users can read only their own customisation submissions
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      // Authenticated users can create customisation submissions for themselves
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      
+      // Submissions cannot be modified or deleted directly by client
+      allow update, delete: if false;
+    }
+  }
+}

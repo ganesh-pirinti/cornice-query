@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { getCurrentUser } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import { getUserCustomisations } from '../services/customisationService';
 import { BoostPointsCard } from '../components/dashboard/BoostPointsCard';
 import { ReferralCard } from '../components/dashboard/ReferralCard';
@@ -10,7 +10,7 @@ import { CQBrand } from '../components/brand/CQBrand';
 import { LayoutDashboard, Layers, Users, ArrowRight } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
-  const user = getCurrentUser();
+  const { user } = useAuth();
 
   useSetDocumentTitle({
     title: 'Cornice & Query — User Dashboard',

@@ -65,20 +65,37 @@ export const LoginForm: React.FC<LoginFormProps> = ({ initialMode = 'login', onS
   };
 
   const handleGoogleAuth = async () => {
+    console.log('[CQ AUTH DEBUG] STEP 1: Google button clicked');
     setLoading(true);
     setErrorMsg(null);
     try {
-      const { error } = await signInWithGoogle();
+      const { user, error } = await signInWithGoogle();
       if (error) {
+        console.error('[CQ AUTH DEBUG] FAILED STEP: STEP 2 / STEP 3 / STEP 6 Authentication/Profile');
+        console.error('[CQ AUTH DEBUG] ERROR CODE:', (error as any)?.code || 'auth_failed');
+        console.error('[CQ AUTH DEBUG] ERROR NAME:', error.name);
+        console.error('[CQ AUTH DEBUG] ERROR MESSAGE:', error.message);
+        console.error('[CQ AUTH DEBUG] FULL ERROR:', error);
         setErrorMsg(error.message || 'Unable to sign you in with Google right now. Please try again.');
         setLoading(false);
       } else {
-        const currentUser = getCurrentUser();
-        if (onSuccess && currentUser) onSuccess(currentUser);
-        else navigate('/dashboard');
+        console.log('[CQ AUTH DEBUG] STEP 5: AuthContext update expected for:', user?.email || user?.id);
+        console.log('[CQ AUTH DEBUG] STEP 8: Navigation started');
+        const currentUser = getCurrentUser() || user;
+        if (onSuccess && currentUser) {
+          onSuccess(currentUser);
+        } else {
+          navigate('/dashboard');
+        }
+        console.log('[CQ AUTH DEBUG] STEP 9: Navigation completed');
       }
-    } catch {
-      setErrorMsg('Google login failed. Please try again.');
+    } catch (err: any) {
+      console.error('[CQ AUTH DEBUG] FAILED STEP: Post-login navigation/routing exception');
+      console.error('[CQ AUTH DEBUG] ERROR CODE:', err?.code || 'routing_error');
+      console.error('[CQ AUTH DEBUG] ERROR NAME:', err?.name);
+      console.error('[CQ AUTH DEBUG] ERROR MESSAGE:', err?.message);
+      console.error('[CQ AUTH DEBUG] FULL ERROR:', err);
+      setErrorMsg('Google login post-navigation error. Please try again.');
       setLoading(false);
     }
   };
