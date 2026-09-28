@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CQLoginScene } from './CQLoginScene';
 import { SkipIntroButton } from './SkipIntroButton';
+import { CQBackgroundMusic } from '../audio/CQBackgroundMusic';
 
 interface CQLoginRevealProps {
   children: React.ReactNode;
@@ -94,6 +95,9 @@ export const CQLoginReveal: React.FC<CQLoginRevealProps> = ({ children }) => {
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background Ambient Music */}
+      <CQBackgroundMusic />
+
       {/* 1. Global 3D Petal & Atmosphere Canvas */}
       <CQLoginScene elapsedTime={elapsedTime} isReducedMotion={isReducedMotion} />
 

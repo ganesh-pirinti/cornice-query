@@ -39,27 +39,23 @@ import type { Project } from '../types/project';
 
 export const PROJECTS: Project[] = [
   /* -------------------------------------------------------------------------- */
-  /*  EXAMPLE PROJECT (Copy this structure for future Cornice & Query posts)    */
+  /*  BUILD #01 — Animated Authentication Interface                             */
   /* -------------------------------------------------------------------------- */
   {
     id: 'cq-01',
-    slug: 'animated-login-ui',
+    slug: 'animated-authentication-interface',
     projectNumber: '01',
     title: 'Animated Authentication Interface',
     shortDescription: 'A modern futuristic glassmorphism login & signup card with fluid kinetic state morphing and real-time password strength validation.',
-    description: `A production-ready, ultra-smooth authentication interface engineered with modern CSS grid, CSS variables, and Framer Motion micro-interactions. Features dark mode ambient backdrop blur, floating field labels, dynamic validation state transitions, and high-contrast accessibility compliance.
-
-This build was designed for high-conversion web applications looking for a sleek, memorable user onboarding experience without compromising load speed or mobile responsiveness.`,
+    description: 'A modern futuristic glassmorphism login & signup card with fluid kinetic state morphing and real-time password strength validation.',
     thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-code-running-on-a-computer-screen-41554-large.mp4',
     category: 'UI/UX',
     technologies: ['HTML', 'CSS', 'JavaScript', 'Framer Motion'],
-    codeUrl: 'https://github.com/corniceandquery/animated-login-ui',
-    liveUrl: 'https://animated-login-ui.demo.cq.dev',
-    socialUrl: 'https://instagram.com/p/cq_login_ui_demo',
+    codeUrl: undefined, // GET CODE hidden naturally until official repository is attached
+    liveUrl: '/projects/animated-authentication-interface/index.html',
+    socialUrl: 'https://www.instagram.com/reel/Dd1XKn2SX7A/?utm_source=ig_web_button_share_sheet&stkn=MzRlODBiNWFlZA==',
     featured: true,
     publishedDate: '2026-09-01',
-    duration: '0:45',
     highlights: [
       'Kinetic input field label animations using SVG mask paths',
       'Real-time cryptographic password entropy meter',
@@ -74,7 +70,7 @@ This build was designed for high-conversion web applications looking for a sleek
 /* -------------------------------------------------------------------------- */
 
 export function getProjectBySlug(slug: string): Project | undefined {
-  return PROJECTS.find((p) => p.slug === slug);
+  return PROJECTS.find((p) => p.slug === slug || (slug === 'animated-login-ui' && p.slug === 'animated-authentication-interface'));
 }
 
 export function getFeaturedProject(): Project {
@@ -86,6 +82,6 @@ export function getRelatedProjects(currentSlug: string, limit = 3): Project[] {
   if (!current) return PROJECTS.slice(0, limit);
   
   return PROJECTS
-    .filter((p) => p.slug !== currentSlug)
+    .filter((p) => p.slug !== currentSlug && p.slug !== 'animated-login-ui')
     .slice(0, limit);
 }

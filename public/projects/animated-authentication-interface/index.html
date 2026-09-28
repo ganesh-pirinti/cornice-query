@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cornice & Query — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --gold-1: #f4d999;
+      --gold-2: #c9932f;
+      --gold-3: #8a5a1e;
+      --blue-1: #bfe9ff;
+      --blue-2: #4fb3ff;
+      --blue-3: #1560a8;
+      --ink: #05070c;
+      --card-bg: rgba(10, 14, 22, 0.55);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-dim: rgba(230, 235, 245, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--ink);
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(40, 30, 20, 0.35), transparent 55%),
+        linear-gradient(180deg, #070a10 0%, #05070c 55%, #030407 100%);
+    }
+
+    /* ---------- starfield ---------- */
+    .stars {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      opacity: .6;
+      animation: twinkle 3.5s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+
+      0%,
+      100% {
+        opacity: .15;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .9;
+        transform: scale(1.6);
+      }
+    }
+
+    /* ---------- ground floor ---------- */
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 22%;
+      background: linear-gradient(180deg, rgba(10, 14, 20, 0) 0%, rgba(6, 9, 14, 0.9) 60%, #05070c 100%);
+      pointer-events: none;
+    }
+
+    .ground::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      filter: blur(1px);
+    }
+
+    /* ---------- energy pillars (fire left / lightning right) ---------- */
+    .pillar-wrap {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 34%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .pillar-wrap.left {
+      left: 0;
+    }
+
+    .pillar-wrap.right {
+      right: 0;
+    }
+
+    .beam {
+      position: absolute;
+      bottom: 0;
+      width: 10px;
+      border-radius: 6px;
+      filter: blur(2px);
+      animation: beamPulse 2.4s ease-in-out infinite;
+    }
+
+    .left .beam {
+      background: linear-gradient(180deg, transparent, var(--gold-1) 30%, var(--gold-2) 60%, transparent);
+      box-shadow: 0 0 40px 8px rgba(230, 170, 70, 0.55);
+    }
+
+    .right .beam {
+      background: linear-gradient(180deg, transparent, var(--blue-1) 30%, var(--blue-2) 60%, transparent);
+      box-shadow: 0 0 40px 8px rgba(80, 180, 255, 0.55);
+    }
+
+    @keyframes beamPulse {
+
+      0%,
+      100% {
+        opacity: .55;
+        transform: scaleY(0.92);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scaleY(1);
+      }
+    }
+
+    .smoke {
+      position: absolute;
+      bottom: 6%;
+      border-radius: 50%;
+      filter: blur(18px);
+      opacity: .55;
+      mix-blend-mode: screen;
+      animation: smokeDrift 9s ease-in-out infinite;
+    }
+
+    .left .smoke {
+      background: radial-gradient(circle, rgba(255, 190, 110, 0.9), rgba(255, 140, 40, 0.25) 55%, transparent 75%);
+    }
+
+    .right .smoke {
+      background: radial-gradient(circle, rgba(150, 220, 255, 0.9), rgba(60, 150, 255, 0.25) 55%, transparent 75%);
+    }
+
+    @keyframes smokeDrift {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+
+      50% {
+        transform: translateY(-18px) scale(1.08);
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .bolt {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .right .bolt {
+      animation: boltFlash 3.6s linear infinite;
+    }
+
+    @keyframes boltFlash {
+
+      0%,
+      92% {
+        opacity: 0;
+      }
+
+      93% {
+        opacity: 1;
+      }
+
+      94% {
+        opacity: .3;
+      }
+
+      95% {
+        opacity: 1;
+      }
+
+      97% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    .ember {
+      position: absolute;
+      bottom: 8%;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--gold-1);
+      box-shadow: 0 0 6px 2px var(--gold-2);
+      animation: emberRise 4.5s ease-in infinite;
+    }
+
+    @keyframes emberRise {
+      0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-380px) translateX(var(--drift, 20px));
+        opacity: 0;
+      }
+    }
+
+    .steps {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 60px;
+      background: repeating-linear-gradient(90deg, rgba(20, 24, 32, 0.9) 0 30px, rgba(10, 13, 18, 0.9) 30px 60px);
+      clip-path: polygon(0 100%, 0 60%, 20% 45%, 40% 30%, 60% 18%, 80% 8%, 100% 0, 100% 100%);
+      opacity: .85;
+    }
+
+    .left .steps {
+      clip-path: polygon(100% 100%, 100% 60%, 80% 45%, 60% 30%, 40% 18%, 20% 8%, 0 0, 0 100%);
+    }
+
+    /* ---------- header / logo ---------- */
+    .header {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 14px;
+      opacity: 0;
+      transform: translateY(-16px);
+      animation: fadeDown 1s ease forwards .15s;
+    }
+
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .monogram {
+      font-family: 'Cinzel', serif;
+      font-size: 56px;
+      font-weight: 600;
+      line-height: 1;
+      background: linear-gradient(120deg, #e9e9ee 10%, #fff 35%, #8f96a3 55%, #d8d8de 75%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.25));
+      letter-spacing: 2px;
+    }
+
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      margin-top: 4px;
+      background: linear-gradient(90deg, var(--gold-1), var(--gold-2) 45%, #d9d9de 55%, #9aa0ab 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .brand-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      opacity: .8;
+    }
+
+    .brand-divider .line {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-2), transparent);
+    }
+
+    .brand-divider .diamond {
+      width: 6px;
+      height: 6px;
+      background: var(--gold-1);
+      transform: rotate(45deg);
+      box-shadow: 0 0 8px var(--gold-2);
+    }
+
+    .tagline {
+      margin-top: 8px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--gold-1);
+      font-weight: 400;
+    }
+
+    /* ---------- card ---------- */
+    .card-shell {
+      position: relative;
+      z-index: 5;
+    }
+
+    .stack {
+      position: absolute;
+      inset: 0;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stack.s1 {
+      transform: translate(6px, 6px) rotate(-1.2deg);
+      border-color: rgba(200, 160, 90, 0.25);
+    }
+
+    .stack.s2 {
+      transform: translate(-6px, 8px) rotate(1.4deg);
+      border-color: rgba(90, 170, 220, 0.25);
+    }
+
+    .card {
+      position: relative;
+      width: 380px;
+      padding: 32px 30px 26px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      opacity: 0;
+      transform: translateY(24px) scale(.97);
+      animation: cardIn .9s cubic-bezier(.2, .8, .25, 1) forwards .5s;
+    }
+
+    @keyframes cardIn {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .welcome {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+    }
+
+    .welcome span {
+      color: var(--blue-2);
+    }
+
+    .sub {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--text-dim);
+      margin: 6px 0 22px;
+    }
+
+    .field {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 13px 40px 13px 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #eee;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .field input::placeholder {
+      color: rgba(230, 235, 245, 0.4);
+    }
+
+    .field input:focus {
+      border-color: var(--blue-2);
+      box-shadow: 0 0 0 3px rgba(79, 179, 255, 0.15);
+    }
+
+    .field .icon-left {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(230, 235, 245, 0.45);
+      font-size: 15px;
+    }
+
+    .field .icon-right {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(230, 235, 245, 0.45);
+      cursor: pointer;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      margin: 2px 0 20px;
+    }
+
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text-dim);
+    }
+
+    .remember input[type=checkbox] {
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 4px;
+      border: 1px solid var(--gold-2);
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .remember input[type=checkbox]:checked {
+      background: var(--gold-2);
+      border-color: var(--gold-1);
+    }
+
+    .remember input[type=checkbox]:checked::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #221606;
+      font-weight: 700;
+    }
+
+    .forgot {
+      color: var(--gold-1);
+      text-decoration: none;
+    }
+
+    .forgot:hover {
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #0c0d10;
+      background: linear-gradient(90deg, var(--gold-2), var(--gold-1) 40%, var(--blue-2) 75%, var(--blue-3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(80, 150, 255, 0.25);
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(80, 150, 255, 0.35);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 16px;
+      color: rgba(230, 235, 245, 0.35);
+      font-size: 11px;
+    }
+
+    .divider .line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .socials {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .socials a {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #eee;
+      text-decoration: none;
+      font-size: 16px;
+      transition: transform .15s, background .15s;
+    }
+
+    .socials a:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .signup {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--text-dim);
+    }
+
+    .signup a {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .sparkle {
+      position: absolute;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      animation: sparklePop 2.6s ease-in-out infinite;
+    }
+
+    @keyframes sparklePop {
+
+      0%,
+      100% {
+        opacity: 0;
+        transform: scale(.4) rotate(0deg);
+      }
+
+      50% {
+        opacity: .9;
+        transform: scale(1) rotate(45deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+
+    <div class="stars" id="stars"></div>
+
+    <div class="pillar-wrap left" id="leftPillar">
+      <div class="steps"></div>
+    </div>
+    <div class="pillar-wrap right" id="rightPillar">
+      <div class="steps"></div>
+    </div>
+
+    <div class="ground"></div>
+
+    <div style="position:relative; z-index:4; display:flex; flex-direction:column; align-items:center;">
+      <div class="header">
+        <div class="monogram">CQ</div>
+        <div class="brand-title">CORNICE &amp; QUERY</div>
+        <div class="brand-divider">
+          <div class="line"></div>
+          <div class="diamond"></div>
+          <div class="line"></div>
+        </div>
+        <div class="tagline">Design, Code, Create.</div>
+      </div>
+
+      <div class="card-shell">
+        <div class="stack s1"></div>
+        <div class="stack s2"></div>
+        <div class="card">
+          <h1 class="welcome">Welcome <span>Back!</span></h1>
+          <p class="sub">Login to continue your creative journey</p>
+
+          <div class="field">
+            <span class="icon-left">&#128100;</span>
+            <input type="text" placeholder="Email or Username">
+          </div>
+          <div class="field">
+            <span class="icon-left">&#128274;</span>
+            <input type="password" id="pw" placeholder="Password">
+            <span class="icon-right" id="toggle">&#128065;</span>
+          </div>
+
+          <div class="row-between">
+            <label class="remember"><input type="checkbox" checked> Remember Me</label>
+            <a href="#" class="forgot">Forgot Password?</a>
+          </div>
+
+          <button class="login-btn">Login <span>&#8594;</span></button>
+
+          <div class="divider">
+            <div class="line"></div><span>OR</span>
+            <div class="line"></div>
+          </div>
+
+          <div class="socials">
+            <a href="#" title="Google">G</a>
+            <a href="#" title="GitHub">&#9679;</a>
+            <a href="#" title="Twitter">&#128038;</a>
+          </div>
+
+          <p class="signup">Don't have an account? <a href="#">Sign Up</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // starfield
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 70; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 70 + '%';
+      s.style.animationDelay = (Math.random() * 3.5) + 's';
+      starsEl.appendChild(s);
+    }
+
+    // pillar beams / smoke / embers
+    function buildPillar(el, side) {
+      // vertical beam
+      const beam = document.createElement('div');
+      beam.className = 'beam';
+      beam.style.height = '92%';
+      beam.style[side] = '18%';
+      el.appendChild(beam);
+
+      // smoke blobs
+      for (let i = 0; i < 4; i++) {
+        const sm = document.createElement('div');
+        sm.className = 'smoke';
+        const size = 90 + Math.random() * 70;
+        sm.style.width = size + 'px';
+        sm.style.height = size * 1.6 + 'px';
+        sm.style[side] = (5 + Math.random() * 40) + '%';
+        sm.style.animationDelay = (Math.random() * 5) + 's';
+        sm.style.animationDuration = (7 + Math.random() * 4) + 's';
+        el.appendChild(sm);
+      }
+
+      // embers
+      for (let i = 0; i < 10; i++) {
+        const em = document.createElement('div');
+        em.className = 'ember';
+        em.style[side] = (10 + Math.random() * 70) + '%';
+        em.style.setProperty('--drift', (Math.random() * 40 - 20) + 'px');
+        em.style.animationDelay = (Math.random() * 4.5) + 's';
+        em.style.animationDuration = (3.5 + Math.random() * 3) + 's';
+        el.appendChild(em);
+      }
+    }
+    buildPillar(document.getElementById('leftPillar'), 'left');
+    buildPillar(document.getElementById('rightPillar'), 'right');
+
+    // password toggle
+    const pw = document.getElementById('pw');
+    const toggle = document.getElementById('toggle');
+    toggle.addEventListener('click', () => {
+      if (pw.type === 'password') { pw.type = 'text'; toggle.innerHTML = '&#128064;'; }
+      else { pw.type = 'password'; toggle.innerHTML = '&#128065;'; }
+    });
+
+    // sparkles near card edges
+    const stage = document.getElementById('stage');
+    const sparklePositions = [
+      { x: '12%', y: '70%' }, { x: '88%', y: '40%' }, { x: '80%', y: '85%' }
+    ];
+    sparklePositions.forEach((p, i) => {
+      const sp = document.createElement('div');
+      sp.className = 'sparkle';
+      sp.style.left = p.x; sp.style.top = p.y;
+      sp.style.fontSize = (14 + i * 4) + 'px';
+      sp.style.animationDelay = (i * 0.8) + 's';
+      sp.innerHTML = '&#10022;';
+      stage.appendChild(sp);
+    });
+  </script>
+</body>
+
+</html>

@@ -203,6 +203,30 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ onOpenVide
                 <ResourceButtons project={project} size="large" className="flex-col !items-stretch" />
               </div>
             </div>
+
+            {/* PREMIUM CQ CTA — TURN YOUR IDEA INTO REAL WEB */}
+            <div className="glass-panel p-6 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-[#12121c] via-[#0e0e16] to-[#08080c] space-y-4 shadow-xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-3xl pointer-events-none" />
+              <div className="space-y-2 relative z-10">
+                <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold block">
+                  BESPOKE DEVELOPMENT
+                </span>
+                <h3 className="font-display text-lg font-bold text-white tracking-tight">
+                  TURN YOUR IDEA INTO REAL WEB
+                </h3>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Have an idea for a website, login interface, landing page, or UI/UX experience? Let's turn it into something real.
+                </p>
+              </div>
+              <div className="pt-2 relative z-10">
+                <Link
+                  to="/customise"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wider uppercase transition-all duration-200 shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                >
+                  <span>CUSTOMISE YOUR OWN →</span>
+                </Link>
+              </div>
+            </div>
           </div>
 
         </div>
