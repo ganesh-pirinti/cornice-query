@@ -35,6 +35,7 @@ export const ResourceButtons: React.FC<ResourceButtonsProps> = ({
         return (
           <a
             href={codeUrl}
+            onClick={(e) => e.stopPropagation()}
             {...(isDownload ? { download: true } : { target: "_blank", rel: "noopener noreferrer" })}
             className={`inline-flex items-center gap-2 font-bold tracking-wide rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all duration-200 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 active:scale-[0.98] ${py}`}
           >
@@ -49,6 +50,7 @@ export const ResourceButtons: React.FC<ResourceButtonsProps> = ({
           href={liveUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className={`inline-flex items-center gap-2 font-semibold tracking-wide rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 hover:border-white/30 transition-all duration-200 active:scale-[0.98] backdrop-blur-md ${py}`}
         >
           <ExternalLink className={size === 'large' ? 'w-5 h-5' : 'w-4 h-4'} />
@@ -61,6 +63,7 @@ export const ResourceButtons: React.FC<ResourceButtonsProps> = ({
           href={socialUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className={`inline-flex items-center gap-2 font-medium tracking-wide rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 hover:border-zinc-500 transition-all duration-200 active:scale-[0.98] ${py}`}
         >
           <Share2 className={size === 'large' ? 'w-5 h-5 text-amber-400' : 'w-4 h-4 text-amber-400'} />
