@@ -51,7 +51,7 @@ export const PROJECTS: Project[] = [
     thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
     category: 'UI/UX',
     technologies: ['HTML', 'CSS', 'JavaScript', 'Framer Motion'],
-    codeUrl: undefined, // GET CODE hidden naturally until official repository is attached
+    codeUrl: '/downloads/CQ1-Animated-Authentication-Interface.zip',
     liveUrl: '/projects/animated-authentication-interface/index.html',
     socialUrl: 'https://www.instagram.com/reel/Dd1XKn2SX7A/?utm_source=ig_web_button_share_sheet&stkn=MzRlODBiNWFlZA==',
     featured: true,

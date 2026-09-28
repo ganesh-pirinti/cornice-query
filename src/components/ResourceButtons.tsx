@@ -30,17 +30,19 @@ export const ResourceButtons: React.FC<ResourceButtonsProps> = ({
 
   return (
     <div className={`flex flex-wrap items-center gap-3.5 ${className}`}>
-      {codeUrl && (
-        <a
-          href={codeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 font-bold tracking-wide rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all duration-200 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 active:scale-[0.98] ${py}`}
-        >
-          <Code2 className={size === 'large' ? 'w-5 h-5' : 'w-4 h-4'} />
-          <span>GET CODE</span>
-        </a>
-      )}
+      {codeUrl && (() => {
+        const isDownload = codeUrl.endsWith('.zip') || codeUrl.includes('/downloads/');
+        return (
+          <a
+            href={codeUrl}
+            {...(isDownload ? { download: true } : { target: "_blank", rel: "noopener noreferrer" })}
+            className={`inline-flex items-center gap-2 font-bold tracking-wide rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all duration-200 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 active:scale-[0.98] ${py}`}
+          >
+            <Code2 className={size === 'large' ? 'w-5 h-5' : 'w-4 h-4'} />
+            <span>GET CODE</span>
+          </a>
+        );
+      })()}
 
       {liveUrl && (
         <a
