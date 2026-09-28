@@ -50,6 +50,7 @@ export const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ project, o
               src={project.videoUrl}
               controls
               autoPlay
+              playsInline
               className="w-full h-full object-contain"
               poster={project.thumbnail}
             >

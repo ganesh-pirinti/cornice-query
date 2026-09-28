@@ -49,6 +49,7 @@ export const PROJECTS: Project[] = [
     shortDescription: 'A modern futuristic glassmorphism login & signup card with fluid kinetic state morphing and real-time password strength validation.',
     description: 'A modern futuristic glassmorphism login & signup card with fluid kinetic state morphing and real-time password strength validation.',
     thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
+    videoUrl: '/projects/animated-authentication-interface.mp4',
     category: 'UI/UX',
     technologies: ['HTML', 'CSS', 'JavaScript', 'Framer Motion'],
     codeUrl: '/downloads/CQ1-Animated-Authentication-Interface.zip',
