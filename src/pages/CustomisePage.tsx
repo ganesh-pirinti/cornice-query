@@ -2,6 +2,7 @@ import React from 'react';
 import { CustomiseHero } from '../components/customise/CustomiseHero';
 import { QualificationQuiz } from '../components/customise/QualificationQuiz';
 import { WhatHappensNext } from '../components/customise/WhatHappensNext';
+import { BeginnerHelpTab } from '../components/customise/BeginnerHelpTab';
 import { useSetDocumentTitle } from '../utils/seo';
 
 export const CustomisePage: React.FC = () => {
@@ -43,6 +44,9 @@ export const CustomisePage: React.FC = () => {
         {/* WHAT HAPPENS NEXT — Build Process Direction */}
         <WhatHappensNext />
       </div>
+
+      {/* Floating Beginner Help Tab (Bottom-Left) */}
+      <BeginnerHelpTab />
     </div>
   );
 };
