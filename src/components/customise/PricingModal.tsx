@@ -8,9 +8,10 @@ import { InteractiveCard3D } from '../3d/InteractiveCard3D';
 interface PricingModalProps {
   score: number;
   fullStackChoice?: 'YES' | 'NO' | null;
+  onTryAgain?: () => void;
 }
 
-export const PricingModal: React.FC<PricingModalProps> = ({ score, fullStackChoice }) => {
+export const PricingModal: React.FC<PricingModalProps> = ({ score, fullStackChoice, onTryAgain }) => {
   const [showRequirementInput, setShowRequirementInput] = useState(false);
   const pricing = getPricingForScore(score);
 
@@ -21,20 +22,25 @@ export const PricingModal: React.FC<PricingModalProps> = ({ score, fullStackChoi
 
   return (
     <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-orange-500/40 space-y-8 animate-fadeIn">
-      {/* Top Offer Badge */}
+      {/* Qualified Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 text-xs font-mono font-bold uppercase">
-          <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-          <span>EARLY-BIRD OFFER ✦ FIRST 20 QUALIFIED BUILDS</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+          <span>🎉 YOU'RE QUALIFIED!</span>
         </div>
 
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          ✦ YOUR CUSTOM BUILD ESTIMATE
+          YOUR CUSTOM BUILD ESTIMATE
         </h2>
 
-        <div className="inline-block px-3.5 py-1 rounded-xl bg-white/5 border border-white/10 text-zinc-300 font-mono text-xs">
-          QUALIFICATION SCORE: <span className="text-orange-400 font-bold">{score} / 5</span>
+        <div className="inline-block px-5 py-2 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-300 font-mono text-sm">
+          <span className="text-zinc-400 text-xs uppercase tracking-widest block font-bold">YOUR SCORE</span>
+          <span className="text-orange-400 font-extrabold text-2xl">{score} / 5</span>
         </div>
+
+        <p className="text-sm text-zinc-300 max-w-md mx-auto leading-relaxed pt-1">
+          Your preferences match what we can build for you.
+        </p>
       </div>
 
       {/* 3D Pricing Display Card */}
@@ -89,18 +95,36 @@ export const PricingModal: React.FC<PricingModalProps> = ({ score, fullStackChoi
       </InteractiveCard3D>
 
       {!showRequirementInput ? (
-        <div className="pt-2 text-center">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
           <button
             onClick={handleContinueToDetails}
-            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-base transition-all duration-200 shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-base transition-all duration-200 shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
           >
             <span>CONTINUE TO PROJECT DETAILS</span>
             <ArrowRight className="w-5 h-5" />
           </button>
+          {onTryAgain && (
+            <button
+              onClick={onTryAgain}
+              className="w-full sm:w-auto px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all border border-white/15 cursor-pointer"
+            >
+              <span>CHANGE MY PREFERENCES →</span>
+            </button>
+          )}
         </div>
       ) : (
-        <div className="pt-4 border-t border-white/10">
+        <div className="pt-4 border-t border-white/10 space-y-4">
           <WhatsAppCTA score={score} offerPrice={pricing.startingPriceDisplay} />
+          {onTryAgain && (
+            <div className="text-center pt-2">
+              <button
+                onClick={onTryAgain}
+                className="text-xs font-mono text-zinc-400 hover:text-orange-400 underline transition-colors cursor-pointer"
+              >
+                CHANGE MY PREFERENCES →
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

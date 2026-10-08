@@ -94,7 +94,7 @@ export const WhatsAppCTA: React.FC<WhatsAppCTAProps> = ({ score, offerPrice = "â
           ) : (
             <>
               <MessageSquare className="w-5 h-5 text-slate-950 fill-slate-950" />
-              <span>SUBMIT REQUIREMENT & JOIN CQ CHANNEL</span>
+              <span>CONTINUE TO CQ CHANNEL â†’</span>
               <ExternalLink className="w-4 h-4 text-slate-950" />
             </>
           )}

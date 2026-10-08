@@ -43,7 +43,7 @@ export const QualificationQuiz: React.FC = () => {
         return answers[q.id] === q.correctAnswer ? acc + 1 : acc;
       }, 0);
 
-      if (computedScore >= 3) {
+      if (computedScore >= 4) {
         trackEvent('qualification_passed', { score: computedScore });
       } else {
         trackEvent('qualification_failed', { score: computedScore });
@@ -80,8 +80,8 @@ export const QualificationQuiz: React.FC = () => {
     return answers[q.id] === q.correctAnswer ? acc + 1 : acc;
   }, 0);
 
-  // 1. If score < 3: Render Fail Result (Not Qualified)
-  if (quizFinished && score < 3) {
+  // 1. If score < 4 (0-3): Render Fail Result (Not Qualified)
+  if (quizFinished && score < 4) {
     return (
       <QualificationResult
         score={score}
@@ -92,8 +92,8 @@ export const QualificationQuiz: React.FC = () => {
     );
   }
 
-  // 2. If score >= 3 AND FullStackChoice not chosen yet: Render FullStackQuestion
-  if (quizFinished && score >= 3 && !fullStackChoice) {
+  // 2. If score >= 4 AND FullStackChoice not chosen yet: Render FullStackQuestion
+  if (quizFinished && score >= 4 && !fullStackChoice) {
     return (
       <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/10 space-y-8 animate-fadeIn" id="qualification-quiz">
         <FullStackQuestion
@@ -104,9 +104,9 @@ export const QualificationQuiz: React.FC = () => {
     );
   }
 
-  // 3. If score >= 3 AND FullStackChoice chosen: Render Qualified Result (PricingModal with WhatsApp Channel CTA)
-  if (quizFinished && score >= 3 && fullStackChoice && showPricing) {
-    return <PricingModal score={score} fullStackChoice={fullStackChoice} />;
+  // 3. If score >= 4 AND FullStackChoice chosen: Render Qualified Result (PricingModal with WhatsApp Channel CTA)
+  if (quizFinished && score >= 4 && fullStackChoice && showPricing) {
+    return <PricingModal score={score} fullStackChoice={fullStackChoice} onTryAgain={handleTryAgain} />;
   }
 
   // 5. Active Quiz Question View

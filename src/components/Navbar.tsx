@@ -39,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'CAMPUS OS', path: '/campusos', badge: 'PS02' },
     { name: 'Projects', path: '/projects' },
     { name: 'Categories', path: '/categories' },
     { name: 'About', path: '/about' },
@@ -79,13 +80,24 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 relative ${
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 relative flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-950 font-semibold bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20'
                       : 'text-zinc-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {link.name}
+                  <span>{link.name}</span>
+                  {link.badge && (
+                    <span
+                      className={`text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded-full uppercase ${
+                        active
+                          ? 'bg-slate-950 text-amber-400'
+                          : 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                      }`}
+                    >
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

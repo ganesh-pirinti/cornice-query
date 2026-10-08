@@ -17,6 +17,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UserCustomisationsPage } from './pages/UserCustomisationsPage';
 import { ReferralsPage } from './pages/ReferralsPage';
+import { CampusOSPage } from './pages/CampusOSPage';
 import { CQScene } from './components/3d/CQScene';
 import { CursorBloom } from './components/effects/CursorBloom';
 import type { Project } from './types/project';
@@ -29,7 +30,9 @@ export function App() {
 
   // Dynamic SEO metadata based on location route
   useSetDocumentTitle({
-    title: location.pathname.startsWith('/project/')
+    title: location.pathname === '/campusos'
+      ? 'CAMPUSOS — The Connected Campus Intelligence System (SRM-AP PS02)'
+      : location.pathname.startsWith('/project/')
       ? 'Cornice & Query — Build Detail'
       : location.pathname === '/projects'
       ? 'Cornice & Query — Project Library Archive'
@@ -67,6 +70,7 @@ export function App() {
               path="/"
               element={<HomePage onOpenVideo={(proj: Project) => setActiveVideoProject(proj)} />}
             />
+            <Route path="/campusos" element={<CampusOSPage />} />
             <Route
               path="/projects"
               element={<ProjectsPage onOpenVideo={(proj: Project) => setActiveVideoProject(proj)} />}
