@@ -37,9 +37,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
     prevPointsRef.current = currentUser?.points ?? null;
   }, [currentUser]);
 
-  const navLinks = [
+  const navLinks: { name: string; path: string; badge?: string }[] = [
     { name: 'Home', path: '/' },
-    { name: 'CAMPUS OS', path: '/campusos', badge: 'PS02' },
     { name: 'Projects', path: '/projects' },
     { name: 'Categories', path: '/categories' },
     { name: 'About', path: '/about' },
